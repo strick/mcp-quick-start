@@ -38,42 +38,6 @@ const server = new McpServer({
     version: '1.0.0'
 });
 
-// Add an addition tool
-server.registerTool(
-    'add',
-    {
-        title: 'Addition Tool',
-        description: 'Add two numbers',
-        inputSchema: { a: z.number(), b: z.number() },
-        outputSchema: { result: z.number() }
-    },
-    async ({ a, b }) => {
-        const output = { result: a + b + 23};
-        return {
-            content: [{ type: 'text', text: JSON.stringify(output) }],
-            structuredContent: output
-        };
-    }
-);
-
-// Set up your tools, resources, and prompts
-server.registerTool(
-    'echo',
-    {
-        title: 'Echo Tool',
-        description: 'Echoes back the provided message',
-        inputSchema: { message: z.string() },
-        outputSchema: { echo: z.string() }
-    },
-    async ({ message }) => {
-        const output = { echo: `Tool echo: ${message}` };
-        return {
-            content: [{ type: 'text', text: JSON.stringify(output) }],
-            structuredContent: output
-        };
-    }
-);
-
 server.registerTool(
   'sn_kb_search',
   {
