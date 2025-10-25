@@ -2,9 +2,35 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
 import express from 'express';
 import { z } from 'zod';
+import dotenv from 'dotenv';
+
+import { SNOAuthClientCredentials } from './auth/snClientCredentials.js';
+import { ServiceNowClient } from './clients/servicenow.js';
+
+dotenv.config();
 
 const app = express();
 app.use(express.json());
+
+// Add this right after: app.use(express.json());
+app.use((req, _res, next) => {
+  const accept = req.headers['accept'];
+  // Ensure the transport sees both acceptable types
+  if (!accept) {
+    req.headers['accept'] = 'application/json, text/event-stream';
+  } else if (Array.isArray(accept)) {
+    const merged = accept.join(', ');
+    if (!merged.includes('application/json') || !merged.includes('text/event-stream')) {
+      req.headers['accept'] = 'application/json, text/event-stream';
+    }
+  } else if (typeof accept === 'string') {
+    if (!accept.includes('application/json') || !accept.includes('text/event-stream')) {
+      req.headers['accept'] = 'application/json, text/event-stream';
+    }
+  }
+  next();
+});
+
 
 // Create the MCP server once (can be reused across requests)
 const server = new McpServer({
@@ -47,6 +73,49 @@ server.registerTool(
         };
     }
 );
+
+server.registerTool(
+  'sn_kb_search',
+  {
+    title: 'Search ServiceNow KB',
+    description: 'Search ServiceNow knowledge base by query string',
+    inputSchema: {
+      query: z.string().min(1),
+      limit: z.number().int().min(1).max(25).optional(),
+    },
+  },
+  async (
+    args: { query: string; limit?: number | undefined },
+    _extra
+  ) => {
+    try {
+      const data = await sn.searchKb(args.query);
+      const output = { results: data };
+      return {
+        content: [{ type: 'text', text: JSON.stringify(output) }],
+        structuredContent: output,
+      };
+    } catch (err: any) {
+      const status = err?.response?.status;
+      const body = err?.response?.data;
+      const www = err?.response?.headers?.['www-authenticate'];
+      const msg = `[SN  ${status ?? 'ERR'}] ${www ? `WWW-Authenticate: ${www} | ` : ''}${typeof body === 'object' ? JSON.stringify(body) : body || err?.message}`;
+      return {
+        content: [{ type: 'text', text: msg }],
+        structuredContent: { status, body, www },
+      };
+    }
+  }
+);
+
+
+const oauth = new SNOAuthClientCredentials(
+  process.env.SERVICENOW_INSTANCE_URL || '',
+  process.env.SN_OAUTH_CLIENT_ID || '',
+  process.env.SN_OAUTH_CLIENT_SECRET || ''
+);
+
+const sn = new ServiceNowClient(process.env.SERVICENOW_INSTANCE_URL || '', oauth);
 
 app.post('/mcp', async (req, res) => {
     // In stateless mode, create a new transport for each request to prevent
