@@ -1,0 +1,63 @@
+# Node / TypeScript
+node_modules
+dist/
+build/
+out/
+lib/
+coverage/
+.nyc_output/
+*.tsbuildinfo
+
+# Compiled artifacts (if you compile into the repo)
+**/*.js
+**/*.js.map
+**/*.d.ts
+
+# VS Code
+.vscode/
+# Keep these if you want to share workspace settings / launch configs:
+#!.vscode/extensions.json
+#!.vscode/launch.json
+
+# Environment files / secrets
+.env
+.env.*.local
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+*.pem
+*.key
+*.p12
+secrets.env
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Test / coverage / caches
+coverage/
+jest-cache/
+jest.config.ts
+.vitest/
+test-results/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor / IDE
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+
+# Temp / build caches
+.cache/
+tmp/
+temp/
+*.log
